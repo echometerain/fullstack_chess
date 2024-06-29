@@ -1,7 +1,7 @@
 import "./ChessBoard.css";
 import { useEffect, useRef, useState } from "react";
 import figures from "../images/figures.png";
-import { getPiece, getGrid } from "./ChessPiece.js";
+import { pixToPiece, getCoord } from "../Utils/GridCalc.js";
 import { validMove } from "../Utils/ValidMove.js";
 import { initMoveHistory, addMove } from "./ChessMove.js";
 import { initChessBoard } from "../Utils/InitBoard.js";
@@ -9,23 +9,26 @@ import { initChessBoard } from "../Utils/InitBoard.js";
 var image = new Image();
 image.src = figures;
 
-const WHITEPIECE = 1;
-const BLACKPIECE = 0;
+// graphical constants
 const PIECEWIDTH = 56;
 const PIECEHIGHT = 60;
 const XOFFSET = 28;
 const MARGIN_LEFT = 20;
 const MARGIN_TOP = 50;
+
 var selectedPiece = null;
 
+// make chessboard component
 const ChessBoard = () => {
   const canvasRef = useRef(null);
   const contextRef = useRef(null);
   const [moveHistory, setMoveHistory] = useState(initMoveHistory());
 
+  // create and log chess board
   let board = initChessBoard();
   console.log(board);
 
+  // hook to draw board upon loading
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -34,6 +37,7 @@ const ChessBoard = () => {
     drawBoard(board);
   }, []);
 
+  // draw every piece on the board
   const drawBoard = (board) => {
     contextRef.current.clearRect(
       0,
@@ -50,6 +54,7 @@ const ChessBoard = () => {
     });
   };
 
+  // make the pieces glow
   const highLightGrid = (grid, color) => {
     contextRef.current.strokeStyle = color;
     contextRef.current.shadowColor = "#d53";
@@ -61,6 +66,7 @@ const ChessBoard = () => {
     contextRef.current.strokeRect(x, y, PIECEWIDTH, PIECEHIGHT);
   };
 
+  // draw a single piece
   const drawPiece = (piece) => {
     const figureX = piece.figurePosition * PIECEWIDTH;
     let color = 1;
@@ -101,6 +107,7 @@ const ChessBoard = () => {
     }
   };
 
+  // move the selected piece to the new position
   const movePiece = (x, y) => {
     if (selectedPiece !== null && selectedPiece !== undefined) {
       selectedPiece.draggingX = x - PIECEWIDTH / 2;
@@ -111,7 +118,7 @@ const ChessBoard = () => {
           highLightGrid(grid, "green");
         });
       }
-      const grid = getGrid(x, y);
+      const grid = getCoord(x, y);
       if (
         grid !== null &&
         selectedPiece !== null &&
@@ -125,7 +132,7 @@ const ChessBoard = () => {
 
   const onMouseDown = ({ nativeEvent }) => {
     let { x, y } = nativeEvent;
-    selectedPiece = getPiece(x, y, board);
+    selectedPiece = pixToPiece(x, y, board);
     if (selectedPiece !== null && selectedPiece !== undefined) {
       selectedPiece.selected = true;
       movePiece(x, y);
@@ -142,11 +149,13 @@ const ChessBoard = () => {
     nativeEvent.preventDefault();
   };
 
+  // handles when the mouse releases
   const onMouseUp = ({ nativeEvent }) => {
     const { x, y } = nativeEvent;
     if (selectedPiece !== null && selectedPiece !== undefined) {
       selectedPiece.selected = false;
-      const grid = getGrid(x, y);
+      const grid = getCoord(x, y);
+      // if mouse moved to a valid position that's not the initial position
       if (
         grid !== null &&
         selectedPiece !== null &&
@@ -174,6 +183,8 @@ const ChessBoard = () => {
     }
     nativeEvent.preventDefault();
   };
+
+  // when the mouse leaves the canvas
   const onMouseLeave = ({ nativeEvent }) => {
     const { offsetX, offsetY } = nativeEvent;
     nativeEvent.preventDefault();
