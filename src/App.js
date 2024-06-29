@@ -1,10 +1,8 @@
-import './App.css';
-import ChessBoard from './components/ChessBoard';
+import "./App.css";
+import ChessBoard from "./components/ChessBoard.js";
 
 function App() {
-  return (
-    <ChessBoard/>
-  );
+  return <ChessBoard />;
 }
 
 export default App;
