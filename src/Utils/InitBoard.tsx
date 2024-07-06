@@ -1,6 +1,4 @@
-import { Piece } from "./Piece";
-
-export type Board = Array<Array<Piece | null>>;
+import { Board, Piece } from "./Structs";
 
 // create back row
 const getRow = (isWhite: boolean): Array<Piece> => {

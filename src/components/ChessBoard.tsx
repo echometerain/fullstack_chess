@@ -1,20 +1,10 @@
 import "./ChessBoard.css";
 import { useEffect, useRef, useState } from "react";
-import figures from "../images/figures.png";
-import { pixToPiece, getCoord } from "../Utils/GridCalc.js";
-import { validMove } from "../Utils/ValidMove.js";
-import { initMoveHistory, addMove } from "./ChessMove.js";
-import { initChessBoard } from "../Utils/InitBoard.js";
+import { initChessBoard } from "../Utils/InitBoard";
+import React from "react";
 
 var image = new Image();
-image.src = figures;
-
-// graphical constants
-const PIECEWIDTH = 56;
-const PIECEHIGHT = 60;
-const XOFFSET = 28;
-const MARGIN_LEFT = 20;
-const MARGIN_TOP = 50;
+image.src = "../images/pieces.png";
 
 var selectedPiece = null;
 
@@ -52,59 +42,6 @@ const ChessBoard = () => {
         }
       });
     });
-  };
-
-  // make the pieces glow
-  const highLightGrid = (grid, color) => {
-    contextRef.current.strokeStyle = color;
-    contextRef.current.shadowColor = "#d53";
-    contextRef.current.shadowBlur = 20;
-    contextRef.current.lineJoin = "bevel";
-    contextRef.current.lineWidth = 5;
-    const x = grid.x * PIECEWIDTH + XOFFSET;
-    const y = grid.y * PIECEWIDTH + XOFFSET;
-    contextRef.current.strokeRect(x, y, PIECEWIDTH, PIECEHIGHT);
-  };
-
-  // draw a single piece
-  const drawPiece = (piece) => {
-    const figureX = piece.figurePosition * PIECEWIDTH;
-    let color = 1;
-    if (piece.name === piece.name.toLowerCase()) color = 0;
-    const figureY = color * PIECEHIGHT;
-    const x = piece.x * PIECEWIDTH + XOFFSET;
-    const y = piece.y * PIECEWIDTH + XOFFSET;
-    if (!piece.selected) {
-      contextRef.current.drawImage(
-        image,
-        figureX,
-        figureY,
-        PIECEWIDTH,
-        PIECEHIGHT,
-        x,
-        y,
-        PIECEWIDTH,
-        PIECEHIGHT
-      );
-    } else {
-      contextRef.current.drawImage(
-        image,
-        figureX,
-        figureY,
-        PIECEWIDTH,
-        PIECEHIGHT,
-        piece.draggingX - MARGIN_LEFT,
-        piece.draggingY - MARGIN_TOP,
-        PIECEWIDTH,
-        PIECEHIGHT
-      );
-      contextRef.current.shadowColor = "#d53";
-      contextRef.current.shadowBlur = 20;
-      contextRef.current.lineJoin = "bevel";
-      contextRef.current.lineWidth = 5;
-      contextRef.current.strokeStyle = "#38f";
-      contextRef.current.strokeRect(x, y, PIECEWIDTH, PIECEHIGHT);
-    }
   };
 
   // move the selected piece to the new position
