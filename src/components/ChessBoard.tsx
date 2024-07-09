@@ -5,6 +5,8 @@ import { GameState } from "../Utils/GameState";
 import type { Piece } from "../Utils/Structs";
 import { ValidMoves } from "../Utils/ValidMoves";
 import { drawPiece, glowGridPos, pixToGrid, setDragging } from "../Utils/Graphics";
+const spriteSheet = new Image();
+spriteSheet.src = "../images/pieces.png";
 
 // make chessboard component
 const ChessBoard = () => {
@@ -14,8 +16,16 @@ const ChessBoard = () => {
   const validEngine = new ValidMoves(game);
   console.log(game.board)
 
-  // print board at beginning
-  useEffect(() => {
+  const setup = () => {
+    // add event listeners
+    canvasRef.current?.addEventListener("mousedown", onMouseDown);
+    canvasRef.current?.addEventListener("mousemove", onMouseMove);
+    canvasRef.current?.addEventListener("mouseup", onMouseUp);
+    canvasRef.current?.addEventListener("mouseleave", onMouseLeave);
+    printBoard();
+  };
+
+  const printBoard = () => {
     context.clearRect(
       0,
       0,
@@ -25,11 +35,14 @@ const ChessBoard = () => {
     game.board.forEach((row) => {
       row.forEach((piece) => {
         if (piece !== null) {
-          drawPiece(piece, context);
+          drawPiece(spriteSheet, piece, context);
         }
       });
     });
-  }, [game, context]);
+  };
+
+  // print board at beginning
+  spriteSheet.onload = setup;
 
   // move the selected piece to the new position
   const movePiece = (x: number, y: number) => {
@@ -133,12 +146,6 @@ const ChessBoard = () => {
   const onMouseLeave = (nativeEvent: MouseEvent) => {
     nativeEvent.preventDefault();
   };
-
-  // add event listeners
-  canvasRef.current?.addEventListener("mousedown", onMouseDown);
-  canvasRef.current?.addEventListener("mousemove", onMouseMove);
-  canvasRef.current?.addEventListener("mouseup", onMouseUp);
-  canvasRef.current?.addEventListener("mouseleave", onMouseLeave);
 
   return (
     <div>

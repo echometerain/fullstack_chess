@@ -6,8 +6,6 @@ const PIECEHIGHT = 60;
 const XOFFSET = 28;
 const MARGIN_LEFT = 20;
 const MARGIN_TOP = 50;
-const spriteSheet = new Image();
-spriteSheet.src = "../images/pieces.png";
 
 // calculate grid position based on pixel coordinate
 export const pixToGrid = (coordX: number, coordY: number): GridPos | null => {
@@ -32,7 +30,7 @@ export const glowGridPos = (grid: GridPos, color: string, curRef: CanvasRenderin
 };
 
 // draw a single piece
-export const drawPiece = (piece: Piece, curRef: CanvasRenderingContext2D) => {
+export const drawPiece = (spriteSheet: CanvasImageSource, piece: Piece, curRef: CanvasRenderingContext2D) => {
   const figureX = piece.spritePos * PIECEWIDTH;
   let color = 1;
   if (piece.isWhite) color = 0;
