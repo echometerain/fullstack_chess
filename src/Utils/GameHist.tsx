@@ -1,8 +1,13 @@
-import { ChessMove, GridPos } from "./Structs";
+import type { ChessMove, GridPos } from "./Structs";
 
-export class History {
-  uci: string = "";
-  moves: Array<ChessMove> = [];
+export class GameHist {
+  uci: string;
+  moves: Array<ChessMove>;
+
+  constructor() {
+    this.uci = "";
+    this.moves = [];
+  }
 
   // coordinate to UCI converter
   static toUCI(source: GridPos) {
@@ -18,6 +23,6 @@ export class History {
       promotion: promotion,
     };
     this.moves.push(move);
-    this.uci += " " + History.toUCI(source) + History.toUCI(dest) + (promotion ? "q" : "");
+    this.uci += " " + GameHist.toUCI(source) + GameHist.toUCI(dest) + (promotion ? "q" : "");
   }
 }

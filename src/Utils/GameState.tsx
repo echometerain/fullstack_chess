@@ -1,10 +1,11 @@
-import { Board, Piece } from "./Structs";
+import type { Board, Piece } from "./Structs";
 import { initChessBoard } from "./InitBoard";
+import { GameHist } from "./GameHist";
 
 // game state class
 export class GameState {
   board: Board;
-  history: History;
+  gameHist: GameHist;
   selectedPiece: Piece | null;
   isWhiteTurn: boolean;
   isCheck: boolean;
@@ -15,6 +16,7 @@ export class GameState {
 
   constructor() {
     this.board = initChessBoard();
+    this.gameHist = new GameHist();
     this.selectedPiece = null;
     this.isWhiteTurn = true;
     this.isCheck = false;
@@ -27,10 +29,22 @@ export class GameState {
   getNotMovedCanCastle(isWhite: boolean, isLeft: boolean): boolean {
     return this.notMoved[isWhite ? 1 : 0][isLeft ? 1 : 0];
   }
+
   setNotMovedCanCastle(isWhite: boolean, isLeft: boolean, value: boolean) {
     this.notMoved[isWhite ? 1 : 0][isLeft ? 1 : 0] = value;
   }
-}
 
-// game state singleton
-export let gs: GameState = new GameState();
+  clone(): GameState {
+    let clone: GameState = new GameState();
+    clone.board = this.board;
+    clone.gameHist = this.gameHist;
+    clone.selectedPiece = this.selectedPiece;
+    clone.isWhiteTurn = this.isWhiteTurn;
+    clone.isCheck = this.isCheck;
+    clone.isCheckmate = this.isCheckmate;
+    clone.isStalemate = this.isStalemate;
+    clone.isPromotion = this.isPromotion;
+    clone.notMoved = this.notMoved;
+    return clone;
+  }
+}

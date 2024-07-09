@@ -4,6 +4,9 @@ export type Piece = {
   isWhite: boolean;
   x: number;
   y: number;
+  draggingX?: number;
+  draggingY?: number;
+  validMoves?: Array<GridPos>;
   isSelected: boolean;
   spritePos: number; // position of sprite in spritesheet
 }

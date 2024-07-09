@@ -1,4 +1,4 @@
-import { Board, Piece } from "./Structs";
+import type { Board, Piece } from "./Structs";
 
 // create back row
 const getRow = (isWhite: boolean): Array<Piece> => {

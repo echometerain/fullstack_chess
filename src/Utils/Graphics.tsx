@@ -1,11 +1,13 @@
-import { gs } from "./GameState";
-import { GridPos, Piece } from "./Structs";
+import type { GridPos, Piece } from "./Structs";
+
 // graphical constants
 const PIECEWIDTH = 56;
 const PIECEHIGHT = 60;
 const XOFFSET = 28;
 const MARGIN_LEFT = 20;
 const MARGIN_TOP = 50;
+const spriteSheet = new Image();
+spriteSheet.src = "../images/pieces.png";
 
 // calculate grid position based on pixel coordinate
 export const pixToGrid = (coordX: number, coordY: number): GridPos | null => {
@@ -17,16 +19,8 @@ export const pixToGrid = (coordX: number, coordY: number): GridPos | null => {
   return null;
 };
 
-// get piece at location
-export const pixToPiece = (coordX: number, coordY: number): Piece | null => {
-  let gridPos = pixToGrid(coordX, coordY);
-  if (gridPos === null) return null;
-  return gs.board[gridPos.x][gridPos.y];
-};
-
-
 // make the pieces glow
-const highLightGrid = (grid, color, curRef) => {
+export const glowGridPos = (grid: GridPos, color: string, curRef: CanvasRenderingContext2D) => {
   curRef.strokeStyle = color;
   curRef.shadowColor = "#d53";
   curRef.shadowBlur = 20;
@@ -38,16 +32,17 @@ const highLightGrid = (grid, color, curRef) => {
 };
 
 // draw a single piece
-const drawPiece = (piece, curRef) => {
-  const figureX = piece.figurePosition * PIECEWIDTH;
+export const drawPiece = (piece: Piece, curRef: CanvasRenderingContext2D) => {
+  const figureX = piece.spritePos * PIECEWIDTH;
   let color = 1;
-  if (piece.name === piece.name.toLowerCase()) color = 0;
+  if (piece.isWhite) color = 0;
   const figureY = color * PIECEHIGHT;
   const x = piece.x * PIECEWIDTH + XOFFSET;
   const y = piece.y * PIECEWIDTH + XOFFSET;
-  if (!piece.selected) {
+  if (piece.draggingX === undefined || piece.draggingY === undefined) { return; }
+  if (!piece.isSelected) {
     curRef.drawImage(
-      image,
+      spriteSheet,
       figureX,
       figureY,
       PIECEWIDTH,
@@ -59,7 +54,7 @@ const drawPiece = (piece, curRef) => {
     );
   } else {
     curRef.drawImage(
-      image,
+      spriteSheet,
       figureX,
       figureY,
       PIECEWIDTH,
@@ -77,3 +72,8 @@ const drawPiece = (piece, curRef) => {
     curRef.strokeRect(x, y, PIECEWIDTH, PIECEHIGHT);
   }
 };
+
+export const setDragging = (piece: Piece, x: number, y: number) => {
+  piece.draggingX = x - PIECEWIDTH / 2;
+  piece.draggingY = y - PIECEHIGHT / 2;
+}

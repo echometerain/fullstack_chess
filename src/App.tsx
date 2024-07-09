@@ -4,7 +4,9 @@ import ChessBoard from "./components/ChessBoard.tsx";
 
 // initialize app
 function App() {
-  return <ChessBoard />;
+  return (
+    <ChessBoard />
+  );
 }
 
 export default App;
