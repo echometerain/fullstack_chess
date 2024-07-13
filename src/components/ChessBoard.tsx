@@ -1,31 +1,20 @@
 import "./ChessBoard.css";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import { GameState } from "../Utils/GameState";
-import type { Piece } from "../Utils/Structs";
+import type { GridPos, Piece } from "../Utils/Structs";
 import { ValidMoves } from "../Utils/ValidMoves";
 import { drawPiece, glowGridPos, pixToGrid, setDragging } from "../Utils/Graphics";
-const spriteSheet = new Image();
-spriteSheet.src = "../images/pieces.png";
+const spriteSheet = require("../images/pieces.png");
 
 // make chessboard component
 const ChessBoard = () => {
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"));
   let context = (canvasRef.current?.getContext("2d") as CanvasRenderingContext2D);
   const [game, setGame] = useState(new GameState());
-  const validEngine = new ValidMoves(game);
-  console.log(game.board)
+  let validEngine: ValidMoves = useMemo(() => new ValidMoves(game), [game]);
 
-  const setup = () => {
-    // add event listeners
-    canvasRef.current?.addEventListener("mousedown", onMouseDown);
-    canvasRef.current?.addEventListener("mousemove", onMouseMove);
-    canvasRef.current?.addEventListener("mouseup", onMouseUp);
-    canvasRef.current?.addEventListener("mouseleave", onMouseLeave);
-    printBoard();
-  };
-
-  const printBoard = () => {
+  const drawBoard = useCallback(() => {
     context.clearRect(
       0,
       0,
@@ -39,123 +28,137 @@ const ChessBoard = () => {
         }
       });
     });
-  };
+  }, [context, game]);
 
-  // print board at beginning
-  spriteSheet.onload = setup;
-
-  // move the selected piece to the new position
-  const movePiece = (x: number, y: number) => {
-    if (game.selectedPiece === null || game.selectedPiece === undefined) {
+  // show dragging graphics for piece
+  const dragPiece = useCallback((x: number, y: number) => {
+    let piece = game.selectedPiece;
+    if (piece === null || piece === undefined) {
       return;
     }
-    setDragging(game.selectedPiece, x, y);
-    if (game.selectedPiece.validMoves && game.selectedPiece.isSelected) {
-      game.selectedPiece.validMoves.forEach((grid) => {
+    setDragging(piece, x, y);
+    if (piece.validMoves && piece.isSelected) {
+      piece.validMoves.forEach((grid) => {
         glowGridPos(grid, "green", context);
       });
     }
-    const grid = pixToGrid(x, y);
-    if (
-      grid !== null &&
-      game.selectedPiece !== null &&
-      game.selectedPiece.isSelected &&
-      !(grid.x === game.selectedPiece.x && grid.y === game.selectedPiece.y)
-    ) {
-      glowGridPos(grid, "yellow", context);
+    const pos = pixToGrid(x, y);
+    if (pos !== null && !(pos.x === piece.x && pos.y === piece.y)) {
+      glowGridPos(pos, "yellow", context);
     }
-
-  };
-
+  }, [context, game.selectedPiece]);
 
   // get piece at location
-  const pixToPiece = (coordX: number, coordY: number): Piece | null => {
+  const pixToPiece = useCallback((coordX: number, coordY: number): Piece | null => {
     let gridPos = pixToGrid(coordX, coordY);
     if (gridPos === null) return null;
-    return game.board[gridPos.x][gridPos.y];
-  };
+    return game.board[gridPos.y][gridPos.x];
+  }, [game]);
 
-
-  const onMouseDown = (nativeEvent: MouseEvent) => {
+  // grab the piece when mouse is down
+  const onMouseDown = useCallback((nativeEvent: MouseEvent) => {
     nativeEvent.preventDefault();
     let { x, y } = nativeEvent;
-    let clone = game.clone();
-    clone.selectedPiece = pixToPiece(x, y);
-    if (clone.selectedPiece === null || clone.selectedPiece === undefined) {
+    let clone: GameState = game.clone();
+    let piece = pixToPiece(x, y);
+    // if no piece is selected
+    if (piece === null || piece === undefined || piece.isWhite !== clone.isWhiteTurn) {
       return;
     }
-    clone.selectedPiece.isSelected = true;
-    movePiece(x, y);
-    if (!clone.selectedPiece.validMoves) {
-      let validMoves = validEngine.getMoves(clone.selectedPiece);
-      if (!validMoves) {
-        return;
-      }
-      clone.selectedPiece.validMoves = validMoves;
+    piece.isSelected = true;
+    if (piece.validMoves === undefined) {
+      let validMoves = validEngine.getMoves(piece);
+      if (!validMoves) return;
+      piece.validMoves = validMoves;
     }
+    clone.selectedPiece = piece;
+    dragPiece(x, y);
     setGame(clone);
-  };
+  }, [dragPiece, game, pixToPiece, validEngine]);
 
-  const onMouseMove = (nativeEvent: MouseEvent) => {
-    var { x, y } = nativeEvent;
-    movePiece(x, y);
+  const onMouseMove = useCallback((nativeEvent: MouseEvent) => {
     nativeEvent.preventDefault();
-  };
+    var { x, y } = nativeEvent;
+    drawBoard();
+    dragPiece(x, y);
+  }, [dragPiece, drawBoard]);
+
   // handles when the mouse releases
-  const onMouseUp = (nativeEvent: MouseEvent) => {
+  const onMouseUp = useCallback((nativeEvent: MouseEvent) => {
+    nativeEvent.preventDefault();
+    const toPos = pixToGrid(nativeEvent.x, nativeEvent.y);
     let clone = game.clone();
-    const { x, y } = nativeEvent;
-    if (clone.selectedPiece === null || clone.selectedPiece === undefined) {
+    let piece = clone.selectedPiece;
+    if (piece === null || piece === undefined) {
       return;
     }
-    clone.selectedPiece.isSelected = false;
-    const grid = pixToGrid(x, y);
-    // if mouse moved to a valid position that's not the initial position
-    if (
-      grid !== null &&
-      clone.selectedPiece !== null &&
-      !(grid.x === clone.selectedPiece.x && grid.y === clone.selectedPiece.y)
-    ) {
-      if (clone.selectedPiece.validMoves === undefined) {
-        return;
-      }
-      if (
-        clone.selectedPiece.validMoves.find(
-          (v) => v.x === grid.x && v.y === grid.y
-        )
-      ) {
-        const source = { x: clone.selectedPiece.x, y: clone.selectedPiece.y };
-        clone.gameHist.addMove(source, grid, false);
-        console.log(clone.gameHist);
-        clone.board[clone.selectedPiece.y][clone.selectedPiece.x] = null;
-        clone.selectedPiece.x = grid.x;
-        clone.selectedPiece.y = grid.y;
-        clone.board[clone.selectedPiece.y][clone.selectedPiece.x] = clone.selectedPiece;
-      } else {
-        console.log("Invalid move to ", grid);
-      }
-    }
-    clone.selectedPiece.validMoves = undefined;
-    movePiece(x, y);
+    piece.isSelected = false;
     clone.selectedPiece = null;
+
+    // if mouse moved to a valid position that's not the initial position
+    if (toPos === null || (toPos.x === piece.x && toPos.y === piece.y) || piece.validMoves === undefined) {
+      return;
+    }
+    if (!piece.validMoves.find((v) => v.x === toPos.x && v.y === toPos.y)) {
+      console.log("Invalid move to ", toPos);
+      return;
+    }
+    handleMove(piece, toPos, clone);
+  }, [game]);
+
+  const handleMove = (piece: Piece, toPos: GridPos, clone: GameState) => {
+    // handle history
+    clone.gameHist.addMove({ x: piece.x, y: piece.y }, toPos, false);
+    console.log(clone.gameHist);
+    clone.board[piece.y][piece.x] = null; // remove piece from old position
+
+    // put piece to new position
+    piece.x = toPos.x;
+    piece.y = toPos.y;
+    piece.validMoves = undefined;
+    clone.board[toPos.y][toPos.x] = piece;
+
+    // clean up
+    clone.isWhiteTurn = !clone.isWhiteTurn;
     setGame(clone);
-    nativeEvent.preventDefault();
-  };
+  }
 
   // when the mouse leaves the canvas
   const onMouseLeave = (nativeEvent: MouseEvent) => {
     nativeEvent.preventDefault();
   };
 
+  const bindListeners = () => {
+    // add event listeners
+    canvasRef.current?.addEventListener("mousedown", onMouseDown);
+    canvasRef.current?.addEventListener("mousemove", onMouseMove);
+    canvasRef.current?.addEventListener("mouseup", onMouseUp);
+    canvasRef.current?.addEventListener("mouseleave", onMouseLeave);
+    return rmListeners;
+  };
+
+  const rmListeners = useCallback(() => {
+    // remove event listeners
+    canvasRef.current?.removeEventListener("mousedown", onMouseDown);
+    canvasRef.current?.removeEventListener("mousemove", onMouseMove);
+    canvasRef.current?.removeEventListener("mouseup", onMouseUp);
+    canvasRef.current?.removeEventListener("mouseleave", onMouseLeave);
+  }, [onMouseDown, onMouseMove, onMouseUp]);
+
+  // print board at beginning
+  useEffect(drawBoard, [drawBoard]);
+  useEffect(bindListeners, [game, onMouseDown, onMouseMove, onMouseUp, rmListeners]);
+  // useEffect(() => console.log(game));  
+
   return (
-    <div>
+    <>
       <canvas
         className="canvas-container"
         width={504}
         height={504}
         ref={canvasRef}
       ></canvas>
-    </div>
+    </>
   );
 };
 

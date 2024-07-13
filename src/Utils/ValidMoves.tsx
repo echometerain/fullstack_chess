@@ -1,3 +1,6 @@
+// white => top
+// black => bottom
+
 import { GameState } from "./GameState";
 import type { GridPos, Piece } from "./Structs";
 
@@ -8,17 +11,19 @@ export class ValidMoves {
   gs: GameState;
 
   constructor(gs: GameState) {
+    console.log("ValidMoves constructor");
+    console.log(gs);
     this.gs = gs;
   }
 
   canGo = (piece: Piece, toPos: GridPos): boolean => {
-    if (piece.x < 0 || piece.x >= 8 || piece.y < 0 || piece.y >= 8) return false;
-    if (this.gs.board[toPos.y][toPos.x]?.isWhite === piece.isWhite) return false;
-    return true;
+    if (toPos.x < 0 || toPos.x >= 8 || toPos.y < 0 || toPos.y >= 8) return false;
+    if (this.gs.board[toPos.y][toPos.x] === null) return true;
+    return this.gs.board[toPos.y][toPos.x]?.isWhite !== piece.isWhite;
   }
 
   willCapture = (piece: Piece, toPos: GridPos): boolean => {
-    if (piece.x < 0 || piece.x >= 8 || piece.y < 0 || piece.y >= 8) return false;
+    if (toPos.x < 0 || toPos.x >= 8 || toPos.y < 0 || toPos.y >= 8) return false;
     if (this.gs.board[toPos.y][toPos.x] === null) return false;
     return this.gs.board[toPos.y][toPos.x]?.isWhite !== piece.isWhite;
   }
@@ -50,8 +55,12 @@ export class ValidMoves {
     if (this.canGo(piece, f1) && !this.willCapture(piece, f1)) validPositions.push(f1); // forward valid if empty
 
     // capture diagonally
-    if (this.canGo(piece, { x: f1.x - 1, y: f1.y })) validPositions.push({ x: f1.x - 1, y: f1.y });
-    if (this.canGo(piece, { x: f1.x + 1, y: f1.y })) validPositions.push({ x: f1.x + 1, y: f1.y });
+    if (this.willCapture(piece, { x: f1.x - 1, y: f1.y })) {
+      validPositions.push({ x: f1.x - 1, y: f1.y });
+    }
+    if (this.willCapture(piece, { x: f1.x + 1, y: f1.y })) {
+      validPositions.push({ x: f1.x + 1, y: f1.y });
+    }
     return validPositions;
   };
 
@@ -66,13 +75,8 @@ export class ValidMoves {
         if (this.gs.board[toPos.y][toPos.x] !== null) break;
       }
     }
-
-    // castling shouldn't be implemented here
-    // // castling (NOT DONE)
-    // let right = piece.isWhite ? 1 : -1;
-    // if (this.gs.getNotMovedCanCastle(piece.isWhite, true))
-    //   validPositions.push({ x: piece.x + right * 3, y: piece.y });
-    // if (this.gs.getNotMovedCanCastle(piece.isWhite, false)) validPositions.push({ x: piece.x - right * 2, y: piece.y });
+    console.log(validPositions);
+    console.log(this.gs);
     return validPositions;
   }
 
@@ -81,7 +85,7 @@ export class ValidMoves {
     let moveShape = [[2, 1], [1, 2]];
     for (let i = 0; i < moveShape.length; i++) {
       for (let j = 0; j < axDirs.length; j++) {
-        let LShape: GridPos = { x: moveShape[i][0] * axDirs[j][0], y: moveShape[i][1] * axDirs[j][1] };
+        let LShape: GridPos = { y: piece.y + moveShape[i][1] * diDirs[j][1], x: piece.x + moveShape[i][0] * diDirs[j][0] };
         if (this.canGo(piece, LShape)) validPositions.push(LShape);
       }
     }

@@ -30,17 +30,18 @@ export const glowGridPos = (grid: GridPos, color: string, curRef: CanvasRenderin
 };
 
 // draw a single piece
-export const drawPiece = (spriteSheet: CanvasImageSource, piece: Piece, curRef: CanvasRenderingContext2D) => {
+export const drawPiece = (spriteSheet: string, piece: Piece, curRef: CanvasRenderingContext2D) => {
   const figureX = piece.spritePos * PIECEWIDTH;
   let color = 1;
-  if (piece.isWhite) color = 0;
+  if (!piece.isWhite) color = 0;
   const figureY = color * PIECEHIGHT;
   const x = piece.x * PIECEWIDTH + XOFFSET;
   const y = piece.y * PIECEWIDTH + XOFFSET;
-  if (piece.draggingX === undefined || piece.draggingY === undefined) { return; }
-  if (!piece.isSelected) {
+  let img = new Image();
+  img.src = spriteSheet;
+  if (!piece.isSelected || piece.draggingX === undefined || piece.draggingY === undefined) {
     curRef.drawImage(
-      spriteSheet,
+      img,
       figureX,
       figureY,
       PIECEWIDTH,
@@ -52,7 +53,7 @@ export const drawPiece = (spriteSheet: CanvasImageSource, piece: Piece, curRef: 
     );
   } else {
     curRef.drawImage(
-      spriteSheet,
+      img,
       figureX,
       figureY,
       PIECEWIDTH,

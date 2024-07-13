@@ -12,6 +12,7 @@ export class GameState {
   isCheckmate: boolean;
   isStalemate: boolean;
   isPromotion: boolean;
+  canPassant: boolean;
   notMoved: Array<Array<boolean>>; // isWhite? { isLeft? }
 
   constructor() {
@@ -23,6 +24,7 @@ export class GameState {
     this.isCheckmate = false;
     this.isStalemate = false;
     this.isPromotion = false;
+    this.canPassant = false;
     this.notMoved = [[true, true], [true, true]]; // whether the king or rook has moved (castling)
   }
 
@@ -44,6 +46,7 @@ export class GameState {
     clone.isCheckmate = this.isCheckmate;
     clone.isStalemate = this.isStalemate;
     clone.isPromotion = this.isPromotion;
+    clone.canPassant = this.canPassant;
     clone.notMoved = this.notMoved;
     return clone;
   }
